@@ -47,7 +47,9 @@ export function AuthProvider({ children }) {
   const screenPrivileges = useMemo(() => {
     if (!currentUser) return {};
     if (isSuperAdmin) return null;
-    return normalizeScreenPrivileges(currentUser.role?.screenPrivileges);
+    return normalizeScreenPrivileges(
+      currentUser.effectiveScreenPrivileges ?? currentUser.role?.screenPrivileges
+    );
   }, [currentUser, isSuperAdmin]);
 
   const hasPrivilege = useCallback(

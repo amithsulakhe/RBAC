@@ -40,16 +40,62 @@ const roles = [
     screenPrivileges: { dashboard:['read'], scheduling:['read','write'], reports:['read'], services:['read'] }},
 ];
 
+const adminNavKeys = roles.find((r) => r.code === 'admin').allowedNavKeys;
+const adminPrivileges = roles.find((r) => r.code === 'admin').screenPrivileges;
+const userNavKeys = roles.find((r) => r.code === 'user').allowedNavKeys;
+const userPrivileges = roles.find((r) => r.code === 'user').screenPrivileges;
+
+function withoutKeys(keys, remove) {
+  return keys.filter((key) => !remove.includes(key));
+}
+
+function withoutScreens(privileges, remove) {
+  const copy = { ...privileges };
+  for (const key of remove) delete copy[key];
+  return copy;
+}
+
 const users = [
-  { name: 'Super Admin', email: 'superadmin@nav.com', password: 'SuperAdmin@123', userType: 'super_admin' },
-  { name: 'Admin User', email: 'admin@nav.com', password: 'Admin@123', userType: 'admin', roleCode: 'admin' },
-  { name: 'Regular User', email: 'user@nav.com', password: 'User@123', userType: 'user', roleCode: 'user' },
+  { name: 'Super Admin', email: 'superadmin@nav.com', password: 'SuperAdmin@123', userType: 'super_admin', hospitalCode: 'CGH' },
+  { name: 'Admin User', email: 'admin@nav.com', password: 'Admin@123', userType: 'admin', roleCode: 'admin', hospitalCode: 'CGH' },
+  { name: 'Admin No Dashboard', email: 'admin2@nav.com', password: 'Admin@123', userType: 'admin', roleCode: 'admin', hospitalCode: 'CGH',
+    isCustomized: true,
+    customAllowedNavKeys: withoutKeys(adminNavKeys, ['dashboard']),
+    customScreenPrivileges: withoutScreens(adminPrivileges, ['dashboard']) },
+  { name: 'Sarah Johnson', email: 'sarah.admin@nav.com', password: 'Admin@123', userType: 'admin', roleCode: 'admin', hospitalCode: 'MHC' },
+  { name: 'Mike Chen', email: 'mike.admin@nav.com', password: 'Admin@123', userType: 'admin', roleCode: 'admin', hospitalCode: 'SMC',
+    isCustomized: true,
+    customAllowedNavKeys: withoutKeys(adminNavKeys, ['reports', 'revenue-billing']),
+    customScreenPrivileges: withoutScreens(adminPrivileges, ['reports', 'revenue-billing']) },
+  { name: 'Regular User', email: 'user@nav.com', password: 'User@123', userType: 'user', roleCode: 'user', hospitalCode: 'CGH' },
+  { name: 'User No Dashboard', email: 'user2@nav.com', password: 'User@123', userType: 'user', roleCode: 'user', hospitalCode: 'CGH',
+    isCustomized: true,
+    customAllowedNavKeys: withoutKeys(userNavKeys, ['dashboard']),
+    customScreenPrivileges: withoutScreens(userPrivileges, ['dashboard']) },
+  { name: 'Jane Doe', email: 'jane.user@nav.com', password: 'User@123', userType: 'user', roleCode: 'user', hospitalCode: 'MHC' },
+  { name: 'Tom Wilson', email: 'tom.user@nav.com', password: 'User@123', userType: 'user', roleCode: 'user', hospitalCode: 'SMC' },
+  { name: 'Lisa Park', email: 'lisa.user@nav.com', password: 'User@123', userType: 'user', roleCode: 'user', hospitalCode: 'CGH',
+    isCustomized: true,
+    customAllowedNavKeys: userNavKeys,
+    customScreenPrivileges: { ...userPrivileges, reports: ['read', 'write'] } },
+  { name: 'Raj Patel', email: 'raj.user@nav.com', password: 'User@123', userType: 'user', roleCode: 'user', hospitalCode: 'MHC' },
 ];
 
 const hospitalSchema = new mongoose.Schema({ name: String, code: String, isActive: { type: Boolean, default: true } }, { timestamps: true });
 const serviceSchema = new mongoose.Schema({ name: String, slug: String, hospital: mongoose.Schema.Types.ObjectId, route: String, order: Number, isActive: { type: Boolean, default: true } }, { timestamps: true });
 const roleSchema = new mongoose.Schema({ name: String, code: String, allowedNavKeys: [String], screenPrivileges: { type: Map, of: [String] }, isActive: { type: Boolean, default: true } }, { timestamps: true });
-const userSchema = new mongoose.Schema({ name: String, email: String, password: String, userType: String, role: mongoose.Schema.Types.ObjectId, hospital: mongoose.Schema.Types.ObjectId, isActive: { type: Boolean, default: true } }, { timestamps: true });
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+  userType: String,
+  role: mongoose.Schema.Types.ObjectId,
+  hospital: mongoose.Schema.Types.ObjectId,
+  isCustomized: { type: Boolean, default: false },
+  customAllowedNavKeys: [String],
+  customScreenPrivileges: { type: Map, of: [String] },
+  isActive: { type: Boolean, default: true },
+}, { timestamps: true });
 const navSchema = new mongoose.Schema({ key: String, label: String, icon: String, route: String, parentKey: String, order: Number, badgeCount: Number, isDynamic: Boolean, isActive: { type: Boolean, default: true } }, { timestamps: true });
 
 const Hospital = mongoose.models.Hospital || mongoose.model('Hospital', hospitalSchema);
@@ -60,20 +106,38 @@ const NavigationItem = mongoose.models.NavigationItem || mongoose.model('Navigat
 
 async function seed() {
   await mongoose.connect(process.env.MONGODB_URI);
-  await User.deleteMany({}); await Role.deleteMany({}); await NavigationItem.deleteMany({}); await Service.deleteMany({}); await Hospital.deleteMany({});
+  await User.deleteMany({});
+  await Role.deleteMany({});
+  await NavigationItem.deleteMany({});
+  await Service.deleteMany({});
+  await Hospital.deleteMany({});
   await NavigationItem.insertMany(navigationItems);
+
   const createdRoles = {};
   for (const role of roles) createdRoles[role.code] = await Role.create(role);
+
   const hospitals = {};
   for (const item of hospitalSeed) {
     const hospital = await Hospital.create(item.hospital);
     hospitals[item.hospital.code] = hospital;
     for (const s of item.services) await Service.create({ ...s, hospital: hospital._id });
   }
+
   for (const u of users) {
-    await User.create({ name: u.name, email: u.email, password: await bcrypt.hash(u.password, 10), userType: u.userType, role: u.roleCode ? createdRoles[u.roleCode]._id : undefined, hospital: hospitals.CGH._id });
+    await User.create({
+      name: u.name,
+      email: u.email,
+      password: await bcrypt.hash(u.password, 10),
+      userType: u.userType,
+      role: u.roleCode ? createdRoles[u.roleCode]._id : undefined,
+      hospital: hospitals[u.hospitalCode]._id,
+      isCustomized: u.isCustomized || false,
+      customAllowedNavKeys: u.customAllowedNavKeys || [],
+      customScreenPrivileges: u.customScreenPrivileges || {},
+    });
   }
-  console.log('Seed completed');
+
+  console.log(`Seed completed: ${users.length} users (${users.length - 1} in user management)`);
   process.exit(0);
 }
 

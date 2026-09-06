@@ -894,3 +894,145 @@ body {
   font-size: 0.85rem;
   color: #64748b;
 }
+
+/* User management */
+.user-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.user-stats span {
+  background: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.role-user-section {
+  margin-bottom: 28px;
+}
+
+.role-user-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.role-user-section-header h3 {
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.role-user-count {
+  font-size: 0.8rem;
+  color: #64748b;
+  background: #e0f2f1;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.access-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.access-badge.default {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.access-badge.custom {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.access-summary {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  max-width: 220px;
+}
+
+.user-editor-row td {
+  background: #f8fafc;
+  padding: 0 !important;
+}
+
+.user-access-editor {
+  padding: 20px 24px;
+  background: #fff;
+  border-top: 2px solid #0d9488;
+}
+
+.user-access-editor-header h4 {
+  margin-bottom: 4px;
+  color: #1e293b;
+}
+
+.user-access-editor-header p {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.user-access-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  background: #fff;
+  color: #0d9488;
+  border: 1px solid #0d9488;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #e0f2f1;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  padding: 10px 20px;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  background: #f1f5f9;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #0d9488;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
